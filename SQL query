@@ -1,0 +1,32 @@
+WITH RankedComments AS (
+  SELECT
+    c.id AS comment_id,
+    c.content,
+    c.postid,
+    c.createdts,
+    u.name AS username,
+    ROW_NUMBER() OVER (PARTITION BY c.postid ORDER BY c.createdts DESC) AS row_num
+  FROM
+    comment c
+    JOIN user u ON c.userid = u.id
+    JOIN post p ON c.postid = p.id
+    JOIN author a ON p.authorid = a.id
+  WHERE
+    a.name = 'James Bond'
+)
+  
+SELECT
+  p.id AS post_id,
+  p.name AS post_name,
+  p.createdts AS post_createdts,
+  rc.comment_id,
+  rc.content AS comment_content,
+  rc.createdts AS comment_createdts,
+  rc.username
+FROM
+  post p
+  JOIN RankedComments rc ON p.id = rc.postid
+WHERE
+  rc.row_num <= 10
+ORDER BY
+  p.createdts DESC, rc.postid, rc.row_num;
